@@ -10,10 +10,19 @@ This write up is going to be a multi part series. (still ongoing)
 
 I'll be using Debian 12 (minimal) as my Host VM, you can refer to here how it's installed :
 
-https://github.com/makusan8/kubernetes
+https://github.com/makusan8/single-vm-kubernetes
 
 Now, let's start :-)
 
 ### Part 1. Install KVM (libvirt)
 
+- Install libvirt with bridge-utils
 
+```
+sudo nala install -y qemu-kvm \
+libvirt-daemon-system \
+libvirt-daemon virtinst bridge-utils \
+libosinfo-bin gpg curl wget \
+mkisofs
+
+```
