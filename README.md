@@ -292,9 +292,7 @@ Initializing provider plugins...
 - Continue to edit main.tf 
 
 ```
-# -- continue from above section
-
-### main.tf
+# -- add after from above section
 
 # add volume disk qcow2
 resource "libvirt_volume" "debian-disk" {
@@ -322,10 +320,51 @@ terraform show
 # libvirt_volume.debian-disk:
 resource "libvirt_volume" "debian-disk" {
     format = "qcow2"
-    id     = "/media/volume-machines/debian-disk"
-    name   = "debian-disk"
+    id     = "/media/virtual-machines/debian-qcow2"
+    name   = "debian-qcow2"
     pool   = "default"
-    size   = 2461534318
-    source = "debian-12-genericcloud-amd64.qcow2"
+    size   = 2147483648
+    source = "/media/virtual-machines/sources/debian-12-genericcloud-amd64.qcow2" 
 }
 ```
+
+```
+# check our default pool
+sudo virsh -c qemu:///system vol-list default
+
+ Name           Path
+---------------------------------------------------
+ debian-qcow2   /media/virtual-machines/debian-qcow2
+ sources        /media/virtual-machines/sources
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
