@@ -350,7 +350,7 @@ terraform destroy
 Destroy complete! Resources: 2 destroyed.
 ```
 
-- Add domain section, edit main.tf
+- Add domain section, edit in main.tf
 
 ```
 # VM specifications
@@ -402,6 +402,119 @@ Connected to domain 'debian-vm'
 Escape character is ^] (Ctrl + ])
 
 debian-vm login:
+```
+
+- We're almost done, however how do we login? We don't set any login & password yet, Ouch!
+
+- Cloud-init to the rescue, we can actually supply or inject a user data variable during the apply process. Let's set it up
+
+```
+# destroy again
+terraform destroy -auto-approve
+```
+
+```
+# create user-data.yaml
+vim user-data.yaml
+```
+
+- Add this below in user-data.yaml
+
+```
+#cloud-config
+
+disable_root: false
+chpasswd:
+  list: |
+       root:123
+  expire: False
+
+# Set TimeZone
+timezone: Asia/Kuala_Lumpur
+
+hostname: debian12-vm
+
+# PostInstall
+runcmd:
+```
+
+- Define cloud init disk and load user-data.yml template in main.tf
+
+```
+# 1. load user-data
+data "template_file" "user_data" {
+  template = file("user-data.yaml")
+}
+
+# 2. supply user data into cloud-init iso
+resource "libvirt_cloudinit_disk" "cloud-init" {   
+  name = "cloud-init.iso"
+  user_data = data.template_file.user_data.rendered
+}
+
+# 3. load cloud-init iso
+cloudinit = libvirt_cloudinit_disk.cloud-init.id
+
+```
+
+- Updated main.tf gonna looks like this
+
+```
+### main.tf
+
+terraform {
+  required_providers {
+    libvirt = {
+      source = "dmacvicar/libvirt"
+    }
+  }
+}
+
+provider "libvirt" {
+  uri = "qemu:///system"
+}
+
+resource "libvirt_volume" "debian-disk" {
+  name = "debian-qcow2"
+  pool = "default"
+  source = "/media/virtual-machines/sources/debian-12-genericcloud-amd64.qcow2"   
+  format = "qcow2"
+}
+
+# 1. load user-data
+data "template_file" "user_data" {
+  template = file("user-data.yaml")
+}
+
+# 2. supply user data into cloud-init iso
+resource "libvirt_cloudinit_disk" "cloud-init" {   
+  name = "cloud-init.iso"
+  user_data = data.template_file.user_data.rendered
+}
+
+resource "libvirt_domain" "debian-vm" {
+  name = "debian-vm"
+  memory = "1024"
+  vcpu = 1
+
+  # 3. load cloud-init  
+  cloudinit = libvirt_cloudinit_disk.cloud-init.id
+
+  disk {
+    volume_id = libvirt_volume.debian-disk.id
+  }
+
+  console {
+    target_type = "serial"
+    type = "pty"
+    target_port = "0"
+  }
+  console {
+    target_type = "virtio"
+    type = "pty"
+    target_port = "1"
+  }
+}
 ```
 
 
