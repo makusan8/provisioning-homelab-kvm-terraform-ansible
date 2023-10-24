@@ -256,14 +256,14 @@ sudo nala update && sudo nala install terraform
 ```
 # create dir
 cd ~/
-mkdir terraform %% cd !$
+mkdir terraform && cd !$
 
 # configure our main tf
 vim main.tf
 ```
 
 ```
-# main.tf
+### main.tf
 terraform {
   required_providers {
     libvirt = {
@@ -288,4 +288,44 @@ Initializing provider plugins...
 
 - Noticed the provider "libvirt" above in our main.tf? That's how we tell terraform to connect to this specific provider. Other providers can be differrent.
 
+- Next thing, we need to add disk volume
+- Continue to edit main.tf 
 
+```
+# -- continue from above section
+
+### main.tf
+
+# add volume disk qcow2
+resource "libvirt_volume" "debian-disk" {
+  name = "debian-qcow2"
+  pool = "default"
+  source = "/media/virtual-machines/sources/debian-12-genericcloud-amd64.qcow2"
+  format = "qcow2"
+}
+```
+
+- This will use the source image as a base and create a new disk volume for our VM
+
+- Let's see this in action, run the commands below
+
+```
+# plan and apply our configuration
+terraform plan -out terraform.out
+terraform apply terraform.out
+```
+
+```
+# show will give more details about what have been applied/created
+terraform show
+
+# libvirt_volume.debian-disk:
+resource "libvirt_volume" "debian-disk" {
+    format = "qcow2"
+    id     = "/media/volume-machines/debian-disk"
+    name   = "debian-disk"
+    pool   = "default"
+    size   = 2461534318
+    source = "debian-12-genericcloud-amd64.qcow2"
+}
+```
