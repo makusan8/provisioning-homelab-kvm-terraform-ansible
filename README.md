@@ -338,10 +338,10 @@ sudo virsh -c qemu:///system vol-list default
  sources        /media/virtual-machines/sources
 ```
 
-- Next, we can define our domain which is kind of specification for our VM like cpu, memory etc
+- Next, we can define our domain which is kind of specifications for our VM like cpu, memory, disk etc
 
-- Before we continue and apply our new configuration, we have to destroy the previous applied volume
-- Always destroy -> plan -> apply
+- Before we proceed and apply our new configuration, we have to destroy the previous applied volume
+- Always! destroy -> plan -> apply
 
 ```
 # destroy
@@ -350,17 +350,59 @@ terraform destroy
 Destroy complete! Resources: 2 destroyed.
 ```
 
+- Add domain section, edit main.tf
 
+```
+# VM specifications
+resource "libvirt_domain" "debian-vm" {
+  name = "debian-vm"
+  memory = "1024"
+  vcpu = 1
 
+  disk {
+    volume_id = libvirt_volume.debian-disk.id
+  }
 
+  console {
+    target_type = "serial"
+    type = "pty"
+    target_port = "0"
+  }
+  console {
+    target_type = "virtio"
+    type = "pty"
+    target_port = "1"
+  }
+}
+```
 
+- Apply the new configuration again
 
+```
+terraform plan -out terraform.out
+terraform apply terraform.out
+```
 
+- Verify via virsh, access with console
 
+```
+# check if our is running
+sudo virsh -c qemu:///system list
 
+ Id   Name        State
+---------------------------
+ 2    debian-vm   running
+```
 
+```
+# access the console, you'll be prompted for login
+sudo virsh -c qemu:///system console debian-vm
 
+Connected to domain 'debian-vm'
+Escape character is ^] (Ctrl + ])
 
+debian-vm login:
+```
 
 
 
