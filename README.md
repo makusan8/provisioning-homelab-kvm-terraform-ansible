@@ -19,6 +19,7 @@ Now, let's start :-)
 - Install libvirt with bridge-utils
 
 ```
+# download (around 200+mb)
 sudo nala install -y qemu-kvm \
 libvirt-daemon-system \
 libvirt-daemon virtinst bridge-utils \
@@ -53,7 +54,12 @@ id -nG
 - Edit libvirtd, qemu config files
 
 ```
-# add this option into libvirtd.conf
+# backup config files
+sudo cp /etc/libvirt/libvirtd.conf /etc/libvirt/libvirtd.conf.orig
+
+sudo cp /etc/libvirt/qemu.conf /etc/libvirt/qemu.conf.orig
+
+# add this options into libvirtd.conf
 sudo cat << EOF >> /etc/libvirt/libvirtd.conf
 unix_sock_group = "libvirt"
 unix_sock_rw_perms = "0770"
@@ -91,17 +97,24 @@ sudo virsh -c qemu:///system version
 
 ### Part 2. Setting up Bridge Mode (internet access)
 
-- On my host, i only have 1 interface ens32 which is connected to the internet. We can convert this interface as a bridge for our Guest's VM.
+- On my host, i only have 1 network interface ens32 which is connected to the internet. We can convert this interface as a bridge for our Guest's VM.
 - Configuring bridge mode
 
 ```
-# save config as backup
+# determine which network interfaces you have
+# mine is ens32
+ip a
+
+1: lo:
+2: ens32:
+
+# backup our config
 sudo cp /etc/network/interfaces /etc/network/interfaces.orig
 
 # disable current ens32, add br0 interface.
 # just comment out the current interface.
 # set br0 (dhcp) to ens32 as master.
-# to set static ip, you can refer to internet for additional settings
+# to set as static ip, you can refer to internet for additional settings
 
 sudo vim /etc/network/interfaces
 
@@ -126,14 +139,60 @@ ip a | grep br0
 ping -c1 www.google.com
 ```
 
+### Part 3. (Optional) Test run Guest VM
 
+This part is optional, you can skip it. I just want to show you how to manually install a guest vm and it's gonna take some time and bandwidth too
 
+- Create a new vm (debian), or use other OS
+- The process here is just like how you fresh install a normal OS manually, set root passwd, select packages etc
 
+```
+# install from net-installer
+sudo virt-install \
+--name deb12 \
+--ram 1024 \
+--vcpus 1 \
+--disk path=/var/lib/libvirt/images/deb12.qcow2,size=10 \
+--os-variant debian11 \
+--network bridge=br0 \
+--graphics none \
+--console pty,target_type=serial \
+--location 'http://ftp.debian.org/debian/dists/bookworm/main/installer-amd64/' \
+--extra-args 'console=ttyS0,115200n8 serial'
+```
 
+- After done installing the OS
 
+```
+# check our new vm
+virsh list --all
+virsh -c qemu:///system list
 
+ Id   Name    State
+-----------------------
+ 2    deb12   running
 
+# access the vm from console, test login as root
+virsh -c qemu:///system console deb12
 
+Debian GNU/Linux 12 debian ttyS0
+deb12 login: root
+Password:
+```
+
+- Remove VM
+
+```
+# shutdown vm
+virsh shutdown debian-vm
+
+# remove vm
+virsh undefine --domain deb12 --remove-all-storage
+```
+
+# Terraform
+
+### Part 4. Installing Terraform
 
 
 
