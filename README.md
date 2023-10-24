@@ -258,9 +258,12 @@ sudo nala update && sudo nala install terraform
 cd ~/
 mkdir terraform %% cd !$
 
-# configure our first tf
+# configure our main tf
 vim main.tf
+```
 
+```
+# main.tf
 terraform {
   required_providers {
     libvirt = {
@@ -272,9 +275,10 @@ terraform {
 provider "libvirt" {
   uri = "qemu:///system"
 }
+```
 
+```
 # run terraform init, this will download the libvirt provider
-
 terraform init
 
 Initializing provider plugins...
@@ -282,6 +286,6 @@ Initializing provider plugins...
 - Installing dmacvicar/libvirt v0.7.4...
 ```
 
-- Noticed the provider "libvirt" above in our main.tf? That's how we tell terraform to connect to this specific provider.
+- Noticed the provider "libvirt" above in our main.tf? That's how we tell terraform to connect to this specific provider. Other providers can be differrent.
 
 
