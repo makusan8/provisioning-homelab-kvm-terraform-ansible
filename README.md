@@ -502,7 +502,7 @@ resource "libvirt_domain" "debian-vm" {
   memory = "1024"
   vcpu = 1
 
-  # 3. load cloud-init  
+  # 3. load cloud-init iso
   cloudinit = libvirt_cloudinit_disk.cloud-init.id
 
   disk {
@@ -522,17 +522,137 @@ resource "libvirt_domain" "debian-vm" {
 }
 ```
 
+- Plan and re-apply our new configuration
+- During the plan (important!), you'll noticed there is user_data = <<-EOT being injected like below, if you're not seeing this, check your configuration again
 
 
+```
+# plan 
+terraform plan -out terraform.out
 
+# libvirt_cloudinit_disk.cloud-init will be created
+  + resource "libvirt_cloudinit_disk" "cloud-init" {
+      + id        = (known after apply)
+      + name      = "cloud-init.iso"
+      + pool      = "default"
+      + user_data = <<-EOT
+            #cloud-config
+            disable_root: false
+            chpasswd:
+              list: |
+                root:123
+              expire: False
 
+            timezone: Asia/Kuala_Lumpur
 
+            hostname: "debian12-vm"
 
+            growpart:
+              mode: auto
+              devices: ['/']
+  }
 
+# apply
+terraform apply terraform.out
+```
 
+- Access the vm via console and try to login with what we set in user-data.yaml
 
+```
+# access the console and login
+sudo virsh -c qemu:///system console debian-vm
 
+debian12-vm login: root
+Password: 
 
+Linux debian12-vm 6.1.0-13-cloud-amd64 ...
+root@debian12-vm:~#
+
+# logout from vm
+exit
+ctrl + ]
+```
+
+```
+# destroy again
+terraform destroy -auto-approve
+```
+
+- Finally our VM is almost ready, but we're still missing the network and thus have no connection to the internet
+- Let's add the last missing part, network
+
+```
+# in main.tf - libvirt domain section, just below console
+
+    console {
+        target_type = "virtio"
+        type = "pty"
+        target_port = "1"
+    }
+
+    # add this network
+    network_interface {
+        network_name = "default"
+    }
+```
+
+- Verify our network, it appears the default is not activated yet
+
+```
+# verify
+sudo virsh net-list --all
+
+ Name      State      Autostart   Persistent
+----------------------------------------------
+ default   inactive   no          yes
+```
+
+```
+# start the default network
+sudo virsh net-start default
+sudo virsh net-autostart default
+```
+
+```
+# show the default settings
+sudo virsh net-dumpxml default
+
+<network connections='1'>
+  <name>default</name>
+  <uuid>c56c2c8c-b020-43d6-a4dc-dc5a01dfad5a</uuid>       
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='virbr0' stp='on' delay='0'/>
+  <mac address='52:54:00:e7:4c:4c'/>
+  <ip address='192.168.122.1' netmask='255.255.255.0'>    
+    <dhcp>
+      <range start='192.168.122.2' end='192.168.122.254'/>
+    </dhcp>
+  </ip>
+</network>
+```
+
+- Recalled the bridge mode that we set up earlier in Part 2? This will be use for our VM's network connection and as for now we don't have to change anything on it
+
+```
+terraform plan -out terraform.out
+terraform apply terraform.out
+```
+
+- Lastly, Start the VM, login and test the connection again
+
+```
+root@debian12-vm:~# ping -c1 www.google.com
+PING www.google.com (142.251.223.68) 56(84) bytes of data.
+64 bytes from kul09s21-in-f4.1e100.net (142.251.223.68): icmp_seq=1 ttl=127 time=31.2 ms
+
+--- www.google.com ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 31.190/31.190/31.190/0.000 ms
+```
 
 
 
