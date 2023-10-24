@@ -91,6 +91,48 @@ sudo virsh -c qemu:///system version
 
 ### Part 2. Setting up Bridge Mode (internet access)
 
+- On my host, i only have 1 interface ens32 which is connected to the internet. We can convert this interface as a bridge for our Guest's VM.
+- Configuring bridge mode
+
+```
+# save config as backup
+sudo cp /etc/network/interfaces /etc/network/interfaces.orig
+
+# disable current ens32, add br0 interface.
+# just comment out the current interface.
+# set br0 (dhcp) to ens32 as master.
+# to set static ip, you can refer to internet for additional settings
+
+sudo vim /etc/network/interfaces
+
+ # The primary network interface
+ # allow-hotplug ens32
+ # iface ens32 inet dhcp
+
+ # Bridge
+ auto br0
+ iface br0 inet dhcp
+ bridge_ports ens32
+```
+
+- If you're done, then reboot
+
+```
+sudo reboot
+
+# after reboot, check br0 interface and see if it still can connect to the internet
+
+ip a | grep br0
+ping -c1 www.google.com
+```
+
+
+
+
+
+
+
+
 
 
 
