@@ -434,11 +434,16 @@ timezone: Asia/Kuala_Lumpur
 
 hostname: debian12-vm
 
+growpart:
+  mode: auto
+  devices: ['/']
+
 # PostInstall
 runcmd:
 ```
 
 - Define cloud init disk and load user-data.yml template in main.tf
+- There are 3 parts that we need to add
 
 ```
 # 1. load user-data
@@ -452,12 +457,12 @@ resource "libvirt_cloudinit_disk" "cloud-init" {
   user_data = data.template_file.user_data.rendered
 }
 
-# 3. load cloud-init iso
+# 3. load cloud-init iso (inside libvirt_domain)
 cloudinit = libvirt_cloudinit_disk.cloud-init.id
 
 ```
 
-- Updated main.tf gonna looks like this
+- Our updated main.tf gonna looks like this
 
 ```
 ### main.tf
