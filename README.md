@@ -196,7 +196,7 @@ If you wondered why we did the part 3 above, it's because the process to bring u
 
 Terraform is an Infrastruce As a Code (IAC), which means we can provision or automate our infra more easily by laying out it's foundation and ready to be consumed for other services or platforms. It supports a bunch of providers for example KVM, Proxmox, Vmware but more focused on the Cloud like AWS, Azure, GoogleCloud etc.
 
-### Part 4. Installing Terraform
+### Part 4. Installing & Configuring Terraform
 
 - Before we start, it's better to create another storage-pool for kvm. Terraform can only know the pool from root enviroment, in this case we need to use sudo. 
 
@@ -314,7 +314,7 @@ terraform apply terraform.out
 ```
 
 ```
-# show will give more details about what have been applied/created
+# this will give more details about what have been applied or created
 terraform show
 
 # libvirt_volume.debian-disk:
@@ -338,8 +338,17 @@ sudo virsh -c qemu:///system vol-list default
  sources        /media/virtual-machines/sources
 ```
 
+- Next, we can define our domain which is kind of specification for our VM like cpu, memory etc
 
+- Before we continue and apply our new configuration, we have to destroy the previous applied volume
+- Always destroy -> plan -> apply
 
+```
+# destroy
+terraform destroy
+
+Destroy complete! Resources: 2 destroyed.
+```
 
 
 
