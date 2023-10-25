@@ -637,12 +637,12 @@ sudo virsh net-dumpxml default
 
 - Recalled the bridge mode that we set up earlier in Part 2? This will be use for our VM's network connection and as for now we don't have to change anything on it
 
+- Lastly, Start VM, login and test the connection again
+
 ```
 terraform plan -out terraform.out
 terraform apply terraform.out
 ```
-
-- Lastly, Start the VM, login and test the connection again
 
 ```
 root@debian12-vm:~# ping -c1 www.google.com
