@@ -1,0 +1,19 @@
+#cloud-config
+
+disable_root: false
+chpasswd:
+  list: |
+       root:123
+  expire: False
+
+# Set TimeZone
+timezone: Asia/Kuala_Lumpur
+
+hostname: debian12-vm
+
+growpart:
+  mode: auto
+  devices: ['/']
+
+# PostInstall
+runcmd:
